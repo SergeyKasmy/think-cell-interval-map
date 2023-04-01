@@ -45,8 +45,11 @@ public:
 		std::cerr << "Called assign(" << keyBegin.inner << ", " << keyEnd.inner << ", " << val.inner << ")" << std::endl;
 		if (!(keyBegin < keyEnd)) return;
 
-		auto prev = m_map.lower_bound(keyEnd);
+		if (val == m_valBegin && m_map.lower_bound(keyBegin) == m_map.begin()) {
+			return;
+		}
 
+		auto prev = m_map.lower_bound(keyEnd);
 		if (prev != m_map.begin()) {
 			prev--;
 			if (!(prev->first < keyBegin)) {
@@ -95,6 +98,9 @@ void print_map(const interval_map<Key, Value> &map) {
 // FIXME: 	Likewise, the first entry in m_map must not contain the same value as m_valBegin.
 int main() {
 	interval_map<Key, Value> map(Value {'A' });
+	print_map(map);
+
+	map.assign(Key {-1}, Key {3}, Value{'A'});
 	print_map(map);
 
 	map.assign(Key {0}, Key {5}, Value{'C'});
