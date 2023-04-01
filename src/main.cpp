@@ -42,42 +42,40 @@ public:
 	// includes keyBegin, but excludes keyEnd.
 	// If !( keyBegin < keyEnd ), this designates an empty interval,
 	// and assign must do nothing.
-	void assign(Key const& keyBegin, Key const& keyEnd, Value const& val) {
-		std::cerr << "Called assign(" << keyBegin.inner << ", " << keyEnd.inner << ", " << val.inner << ")" << std::endl;
+	void assign(K const& keyBegin, K const& keyEnd, V const& val) {
+		// begin is greater than end
 		if (!(keyBegin < keyEnd)) return;
 
+		// asked to insert the same val as valBegin at the beginning
 		if (val == m_valBegin && m_map.lower_bound(keyBegin) == m_map.begin()) {
 			return;
 		}
 
-		const auto end = m_map.lower_bound(keyEnd);
+		// iterator to the end
+		const auto it_end = m_map.lower_bound(keyEnd);
+
 		std::optional<Value> end_val;
-		if (end != m_map.begin()) {
-			auto prev = end;
+		if (it_end != m_map.begin()) {
+			auto prev = it_end;
 			prev--;
 			if (!(prev->first < keyBegin)) {
-				std::cerr << "Remembering new end value: " << prev->second.inner << std::endl;
 				end_val = std::move(prev->second);
-			} else {
-				std::cerr << "prev before keyEnd not found" << std::endl;
 			}
-		} else {
-			std::cerr << "map is empty - end is .begin()" << std::endl;
 		}
 
-		const auto begin = m_map.upper_bound(keyBegin);
-		if (begin != m_map.end()) {
-			std::cerr << "Erasing from " << begin->first.inner << " to " << end->first.inner << std::endl;
-			m_map.erase(begin, end);
-		} else {
-			std::cerr << "map is empty - begin is .end()" << std::endl;
+		// iterator to the beginning
+		const auto it_begin = m_map.upper_bound(keyBegin);
+
+		// erase everything inside begin..end
+		// begin will be set to val and end will be set to end_val later
+		if (it_begin != m_map.end()) {
+			m_map.erase(it_begin, it_end);
 		}
 
-		std::cerr << "Assigning " << keyBegin.inner << " -> " << val.inner << std::endl;
 		m_map.insert_or_assign(keyBegin, val);
 
 		if (end_val.has_value()) {
-			std::cerr << "Assigning end " << keyEnd.inner << " -> " << end_val->inner << std::endl;
+			// insert to avoid overwriting
 			m_map.insert({keyEnd, *end_val});
 		}
 	}
