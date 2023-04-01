@@ -65,11 +65,14 @@ public:
 		}
 
 		// iterator to the end
-		const auto end_it = m_map.lower_bound(keyEnd);
+		auto end_it = begin_it;
+
+		// calculate end iterator manually to avoid logarithmic .lower_bound()
+		while (end_it->first < keyEnd && end_it != m_map.end()) end_it++;
 
 		// the value that should become the new end
 		// (e.g. if a value begins in keyBegin..keyEnd)
-		std::optional<Value> end_val;
+		std::optional<V> end_val;
 
 		if (end_it != m_map.begin()) {
 			auto prev_from_end = end_it;
@@ -111,7 +114,7 @@ void print_map(const interval_map<Key, Value> &map) {
 	map.print_inner_map();
 	std::cerr << "-------------------------------" << std::endl;
 	for (int i = -5; i < 12; i++) {
-		std::cerr << i << " -> " << map[Key {i}].inner << std::endl;
+		std::cerr << i << " -> " << map[{i}].inner << std::endl;
 	}
 	std::cerr << "-------------------------------" << std::endl;
 }
@@ -122,28 +125,28 @@ int main() {
 	map.assign({3}, {5}, {'A'});
 	print_map(map);
 
-	/*
-	interval_map<Key, Value> map(Value {'A' });
-	print_map(map);
+	std::cerr << "----------------\n" << "MAP 2" << "\n----------------" << std::endl;
 
-	map.assign(Key {-1}, Key {3}, Value{'A'});
-	print_map(map);
+	interval_map<Key, Value> map2({'A'});
+	print_map(map2);
 
-	map.assign(Key {0}, Key {5}, Value{'C'});
-	print_map(map);
+	map2.assign({-1}, {3}, {'A'});
+	print_map(map2);
 
-	map.assign(Key {1}, Key {3}, Value{'B'});
-	print_map(map);
+	map2.assign({0}, {5}, {'C'});
+	print_map(map2);
 
-	map.assign(Key {2}, Key {3}, Value{'B'});
-	print_map(map);
+	map2.assign({1}, {3}, {'B'});
+	print_map(map2);
 
-	map.assign(Key {-3}, Key {2}, Value{'D'});
-	print_map(map);
+	map2.assign({2}, {3}, {'B'});
+	print_map(map2);
 
-	map.assign(Key {6}, Key {10}, Value{'F'});
-	print_map(map);
-	*/
+	map2.assign({-3}, {2}, {'D'});
+	print_map(map2);
+
+	map2.assign({6}, {10}, {'F'});
+	print_map(map2);
 
 	return 0;
 }
