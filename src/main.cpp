@@ -46,30 +46,45 @@ public:
 		// begin is greater than end
 		if (!(keyBegin < keyEnd)) return;
 
+		// iterator to the beginning (outer)
+		const auto begin_it_outer = m_map.lower_bound(keyBegin);
+
 		// asked to insert the same val as valBegin at the beginning
-		if (val == m_valBegin && m_map.lower_bound(keyBegin) == m_map.begin()) {
+		if (val == m_valBegin && begin_it_outer == m_map.begin()) {
 			return;
 		}
 
-		// iterator to the end
-		const auto it_end = m_map.lower_bound(keyEnd);
+		if (begin_it_outer != m_map.begin()) {
+			auto prev_from_begin = begin_it_outer;
+			prev_from_begin--;
 
-		std::optional<Value> end_val;
-		if (it_end != m_map.begin()) {
-			auto prev = it_end;
-			prev--;
-			if (!(prev->first < keyBegin)) {
-				end_val = std::move(prev->second);
+			// asked to insert the same val as previous
+			if (prev_from_begin->second == val) {
+				return;
 			}
 		}
 
-		// iterator to the beginning
-		const auto it_begin = m_map.upper_bound(keyBegin);
+		// iterator to the end
+		const auto end_it = m_map.lower_bound(keyEnd);
+
+		// the value that should become the new end
+		std::optional<Value> end_val;
+
+		if (end_it != m_map.begin()) {
+			auto prev_from_end = end_it;
+			prev_from_end--;
+			if (!(prev_from_end->first < keyBegin)) {
+				end_val = std::move(prev_from_end->second);
+			}
+		}
+
+		// iterator to the beginning (inner)
+		const auto begin_it = m_map.upper_bound(keyBegin);
 
 		// erase everything inside begin..end
 		// begin will be set to val and end will be set to end_val later
-		if (it_begin != m_map.end()) {
-			m_map.erase(it_begin, it_end);
+		if (begin_it != m_map.end()) {
+			m_map.erase(begin_it, end_it);
 		}
 
 		m_map.insert_or_assign(keyBegin, val);
@@ -101,7 +116,6 @@ void print_map(const interval_map<Key, Value> &map) {
 	std::cerr << "-------------------------------" << std::endl;
 }
 
-// FIXME: 	Likewise, the first entry in m_map must not contain the same value as m_valBegin.
 int main() {
 	interval_map<Key, Value> map(Value {'A' });
 	print_map(map);
@@ -113,6 +127,9 @@ int main() {
 	print_map(map);
 
 	map.assign(Key {1}, Key {3}, Value{'B'});
+	print_map(map);
+
+	map.assign(Key {2}, Key {3}, Value{'B'});
 	print_map(map);
 
 	map.assign(Key {-3}, Key {2}, Value{'D'});
