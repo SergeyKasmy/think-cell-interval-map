@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <optional>
 
 struct Key {
 	int inner;
@@ -49,29 +50,36 @@ public:
 			return;
 		}
 
-		auto prev = m_map.lower_bound(keyEnd);
-		if (prev != m_map.begin()) {
+		const auto end = m_map.lower_bound(keyEnd);
+		std::optional<Value> end_val;
+		if (end != m_map.begin()) {
+			auto prev = end;
 			prev--;
 			if (!(prev->first < keyBegin)) {
-				std::cerr << "Assigning " << keyEnd.inner << " -> " << prev->second.inner << std::endl;
-				m_map.insert({keyEnd, prev->second});
+				std::cerr << "Remembering new end value: " << prev->second.inner << std::endl;
+				end_val = std::move(prev->second);
+			} else {
+				std::cerr << "prev before keyEnd not found" << std::endl;
 			}
 		} else {
-			std::cerr << "prev before keyEnd not found" << std::endl;
+			std::cerr << "map is empty - end is .begin()" << std::endl;
 		}
 
-		auto begin = m_map.upper_bound(keyBegin);
-		auto end = m_map.lower_bound(keyEnd);
-		/* std::cerr << "begin: " << begin->first.inner << ", end: " << end->first.inner << std::endl; */
-		if (begin != m_map.end() && end != m_map.end()) {
+		const auto begin = m_map.upper_bound(keyBegin);
+		if (begin != m_map.end()) {
 			std::cerr << "Erasing from " << begin->first.inner << " to " << end->first.inner << std::endl;
 			m_map.erase(begin, end);
 		} else {
-			std::cerr << "outer is empty" << std::endl;
+			std::cerr << "map is empty - begin is .end()" << std::endl;
 		}
 
 		std::cerr << "Assigning " << keyBegin.inner << " -> " << val.inner << std::endl;
 		m_map.insert_or_assign(keyBegin, val);
+
+		if (end_val.has_value()) {
+			std::cerr << "Assigning end " << keyEnd.inner << " -> " << end_val->inner << std::endl;
+			m_map.insert({keyEnd, *end_val});
+		}
 	}
 
 	// look-up of the value associated with key
