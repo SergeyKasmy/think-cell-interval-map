@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <map>
 #include <optional>
@@ -54,14 +55,9 @@ public:
 			return;
 		}
 
-		if (begin_it != m_map.begin()) {
-			auto prev_from_begin = begin_it;
-			prev_from_begin--;
-
-			// asked to insert the same val as the previous one
-			if (prev_from_begin->second == val) {
-				return;
-			}
+		// asked to insert the same val as the previous one
+		if (begin_it != m_map.begin() && begin_it->second == val) {
+			return;
 		}
 
 		// iterator to the end
@@ -69,18 +65,18 @@ public:
 
 		// calculate end iterator manually to avoid logarithmic .lower_bound()
 		while (end_it->first < keyEnd && end_it != m_map.end()) end_it++;
+		assert(end_it == m_map.lower_bound(keyEnd));
 
 		// the value that should become the new end
-		// (e.g. if a value begins in keyBegin..keyEnd)
-		std::optional<V> end_val;
+		V end_val = m_valBegin;
 
 		if (end_it != m_map.begin()) {
 			auto prev_from_end = end_it;
 			prev_from_end--;
 			
-			// previous key isn't the one we are overwriting but is located inside keyBegin..keyEnd instead
-			if (!(prev_from_end->first < keyBegin)) {
-				end_val = std::move(prev_from_end->second);
+			const auto prev = std::move(prev_from_end->second);
+			if (!(prev == val)) {
+				end_val = prev;
 			}
 		}
 
@@ -92,10 +88,8 @@ public:
 
 		m_map.insert_or_assign(keyBegin, val);
 
-		if (end_val.has_value()) {
-			// insert to avoid overwriting if there is a value there already
-			m_map.insert({keyEnd, *end_val});
-		}
+		// insert to avoid overwriting if there is a value there already
+		m_map.insert({keyEnd, end_val});
 	}
 
 	// look-up of the value associated with key
